@@ -25,3 +25,4 @@ Next steps
 - Parse recognized text into fields (summary, start, end, location).
 - Improve UI/UX for box selection and confirmation.
 - Add tests and error handling.
+# makeAppointment
