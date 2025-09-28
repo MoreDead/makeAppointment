@@ -1,6 +1,5 @@
 package com.example.docscanics
 
-import android.graphics.Bitmap
 import android.media.Image
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage

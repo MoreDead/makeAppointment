@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 android {
@@ -22,7 +23,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -40,6 +41,18 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // Code style: ktlint
+    // See: https://github.com/JLLeitschuh/ktlint-gradle
+    // Run checks: ./gradlew :app:ktlintCheck
+    // Auto-format: ./gradlew :app:ktlintFormat
+    // Treat as Android project for appropriate defaults
+    // (no additional rules configured yet)
+    // You can configure reporters, disabled rules, etc., if needed.
+}
+
+ktlint {
+    android.set(true)
 }
 
 dependencies {
@@ -59,6 +72,10 @@ dependencies {
 
     // ML Kit Text Recognition (on-device)
     implementation("com.google.mlkit:text-recognition:16.0.0")
+
+    // Kotlin Coroutines for async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
 
     // Java 8+ APIs desugaring (for java.time etc.)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")

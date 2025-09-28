@@ -1,19 +1,16 @@
 package com.example.docscanics
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.docscanics.databinding.ActivityMainBinding
 import java.time.ZoneId
@@ -22,7 +19,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
@@ -69,9 +65,10 @@ class MainActivity : AppCompatActivity() {
         cameraProviderFuture.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-            }
+            val preview =
+                Preview.Builder().build().also {
+                    it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+                }
 
             imageCapture = ImageCapture.Builder().build()
 
@@ -99,36 +96,43 @@ class MainActivity : AppCompatActivity() {
 
     private fun captureAndRecognize() {
         val imageCapture = imageCapture ?: return
-        imageCapture.takePicture(cameraExecutor, object : ImageCapture.OnImageCapturedCallback() {
-            override fun onCaptureSuccess(image: ImageProxy) {
-                // TODO: Convert to InputImage and run OCR, cropping to selectedBox if present
-                // For now, demonstrate building an ICS from placeholder text
-                image.close()
-                val now = ZonedDateTime.now(ZoneId.systemDefault())
-                val eventText = "Doctor appointment at 3pm on Oct 2, 2025"
-                createAppointmentFromText(eventText, now)
-            }
+        imageCapture.takePicture(
+            cameraExecutor,
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    // TODO: Convert to InputImage and run OCR, cropping to selectedBox if present
+                    // For now, demonstrate building an ICS from placeholder text
+                    image.close()
+                    val now = ZonedDateTime.now(ZoneId.systemDefault())
+                    val eventText = "Doctor appointment at 3pm on Oct 2, 2025"
+                    createAppointmentFromText(eventText, now)
+                }
 
-            override fun onError(exception: ImageCaptureException) {
-                Toast.makeText(this@MainActivity, "Capture failed: ${exception.message}", Toast.LENGTH_LONG).show()
-            }
-        })
+                override fun onError(exception: ImageCaptureException) {
+                    Toast.makeText(this@MainActivity, "Capture failed: ${exception.message}", Toast.LENGTH_LONG).show()
+                }
+            },
+        )
     }
 
     private var pendingIcs: String? = null
 
-    private fun createAppointmentFromText(text: String, referenceTime: ZonedDateTime) {
+    private fun createAppointmentFromText(
+        text: String,
+        referenceTime: ZonedDateTime,
+    ) {
         // TODO: Parse text into structured fields (summary, start, end, location, description)
         val summary = text
         val start = referenceTime.plusDays(1).withHour(15).withMinute(0)
         val end = start.plusHours(1)
-        val ics = IcsWriter.buildEvent(
-            summary = summary,
-            start = start,
-            end = end,
-            location = null,
-            description = "Created from scanned text"
-        )
+        val ics =
+            IcsWriter.buildEvent(
+                summary = summary,
+                start = start,
+                end = end,
+                location = null,
+                description = "Created from scanned text",
+            )
         pendingIcs = ics
         Toast.makeText(this, "ICS ready. Tap Save to export.", Toast.LENGTH_SHORT).show()
     }
