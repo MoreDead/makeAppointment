@@ -12,9 +12,28 @@ object OcrProcessor {
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
     suspend fun recognize(imageProxy: ImageProxy): Text {
-        val mediaImage: Image = imageProxy.image ?: error("No image")
-        val rotation = imageProxy.imageInfo.rotationDegrees
-        val input = InputImage.fromMediaImage(mediaImage, rotation)
-        return recognizer.process(input).await()
+        try {
+            val mediaImage: Image = imageProxy.image 
+                ?: throw IllegalStateException("ImageProxy does not contain a valid image")
+            
+            if (mediaImage.width <= 0 || mediaImage.height <= 0) {
+                throw IllegalStateException("Image has invalid dimensions: ${mediaImage.width}x${mediaImage.height}")
+            }
+            
+            val rotation = imageProxy.imageInfo.rotationDegrees
+            val input = InputImage.fromMediaImage(mediaImage, rotation)
+            
+            val result = recognizer.process(input).await()
+            
+            // Validate that we got a result
+            if (result.text.isBlank()) {
+                // This is not an error, just no text found
+                return result
+            }
+            
+            return result
+        } catch (e: Exception) {
+            throw Exception("OCR processing failed: ${e.message}", e)
+        }
     }
 }
