@@ -64,14 +64,14 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
 
-    // CameraX
-    implementation("androidx.camera:camera-core:1.4.0")
-    implementation("androidx.camera:camera-camera2:1.4.0")
-    implementation("androidx.camera:camera-lifecycle:1.4.0")
-    implementation("androidx.camera:camera-view:1.4.0")
-
     // ML Kit Text Recognition (on-device)
     implementation("com.google.mlkit:text-recognition:16.0.0")
+
+    // Google Gemini AI for enhanced text extraction
+    implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+
+    // EXIF handling for image orientation
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     // Kotlin Coroutines for async operations
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")

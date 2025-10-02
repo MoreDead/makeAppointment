@@ -3,38 +3,254 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rootContainer"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/viewFinder"
+    <!-- Home Screen Content -->
+    <ScrollView
+        android:id="@+id/homeScreen"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+            
+            <!-- Top Half: Letter Graphics -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="32dp">
+                
+                <!-- Letter 1 -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_weight="1"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    android:backgroundTint="@color/letter_bg_1">
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Hospital"
+                            android:textStyle="bold"
+                            android:textSize="14sp"
+                            android:textColor="@color/letter_text" />
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Date: Mar 15\nTime: 2:30 PM\nDr. Smith"
+                            android:textSize="12sp"
+                            android:textColor="@color/letter_text"
+                            android:layout_marginTop="4dp" />
+                        
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+                
+                <!-- Letter 2 -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_weight="1"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    android:backgroundTint="@color/letter_bg_2">
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Clinic"
+                            android:textStyle="bold"
+                            android:textSize="14sp"
+                            android:textColor="@color/letter_text" />
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Date: Apr 22\nTime: 10:00 AM\nCheck-up"
+                            android:textSize="12sp"
+                            android:textColor="@color/letter_text"
+                            android:layout_marginTop="4dp" />
+                        
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+                
+            </LinearLayout>
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="48dp">
+                
+                <!-- Letter 3 -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_weight="1"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    android:backgroundTint="@color/letter_bg_3">
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Dental"
+                            android:textStyle="bold"
+                            android:textSize="14sp"
+                            android:textColor="@color/letter_text" />
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Date: May 5\nTime: 3:15 PM\nCleaning"
+                            android:textSize="12sp"
+                            android:textColor="@color/letter_text"
+                            android:layout_marginTop="4dp" />
+                        
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+                
+                <!-- Letter 4 -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_weight="1"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    android:backgroundTint="@color/letter_bg_4">
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Surgery"
+                            android:textStyle="bold"
+                            android:textSize="14sp"
+                            android:textColor="@color/letter_text" />
+                        
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Date: Jun 12\nTime: 9:00 AM\nConsult"
+                            android:textSize="12sp"
+                            android:textColor="@color/letter_text"
+                            android:layout_marginTop="4dp" />
+                        
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+                
+            </LinearLayout>
+            
+            <!-- meetApp Logo -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="meetApp"
+                android:textSize="42sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_color"
+                android:gravity="center"
+                android:layout_marginBottom="24dp"
+                android:fontFamily="sans-serif-light" />
+            
+            <!-- Descriptive Text -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Scan your paper document or screenshot your email appointment. You can also save a PDF on your device ready for processing."
+                android:textSize="16sp"
+                android:textColor="@color/text_secondary"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="32dp" />
+            
+            <!-- Scan Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Now Scan"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                style="@style/Widget.MaterialComponents.Button"
+                app:cornerRadius="28dp"
+                android:layout_marginBottom="24dp" />
+                
+        </LinearLayout>
+        
+    </ScrollView>
 
-    <com.google.android.material.materialswitch.MaterialSwitch
-        android:id="@+id/btnToggleSelect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Select Box"
-        app:layout_anchorGravity="top|end"
+    <!-- Image preview for selected image (hidden initially) -->
+    <ImageView
+        android:id="@+id/imagePreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="80dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="Selected image preview"
+        android:background="@color/background_color"
+        android:visibility="gone" />
+    
+    <!-- Processing Button (visible only when image is selected) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnProcess"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
         android:layout_margin="16dp"
-        app:layout_anchor="@id/rootContainer" />
+        android:text="Extract Appointment Details"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        style="@style/Widget.MaterialComponents.Button"
+        app:cornerRadius="28dp"
+        android:layout_gravity="bottom"
+        android:visibility="gone" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnCapture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:srcCompat="@android:drawable/ic_menu_camera"
-        app:layout_anchor="@id/rootContainer"
-        app:layout_anchorGravity="bottom|center_horizontal"
-        android:layout_margin="24dp" />
-
+    <!-- Hidden FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnSaveIcs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:srcCompat="@android:drawable/ic_menu_save"
-        app:layout_anchor="@id/rootContainer"
-        app:layout_anchorGravity="bottom|end"
-        android:layout_margin="24dp" />
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
+        android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -18,12 +18,12 @@ object IcsWriter {
         // Input validation
         require(summary.isNotBlank()) { "Event summary cannot be blank" }
         require(start.isBefore(end)) { "Event start time must be before end time" }
-        
+
         // Truncate very long fields to prevent ICS issues
         val truncatedSummary = summary.take(200)
         val truncatedLocation = location?.take(200)
         val truncatedDescription = description?.take(500)
-        
+
         val uid = UUID.randomUUID().toString()
         val dtStamp = ZonedDateTime.now(ZoneId.of("UTC")).format(dtFormatter)
         val dtStart = start.withZoneSameInstant(ZoneId.of("UTC")).format(dtFormatter)

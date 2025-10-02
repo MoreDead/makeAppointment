@@ -159,9 +159,7 @@ class MainActivity : AppCompatActivity() {
                     showAppointmentDetails(appointmentDetails, ocrResult.text)
                 }
             } catch (e: Exception) {
-                val isOverloaded = e.message?.contains("overloaded") == true || e.message?.contains("503") == true
-                val errorMsg = if (isOverloaded) "Gemini AI is busy, using OCR + local analysis" else "Gemini analysis failed, using OCR + local analysis"
-                Log.w("MainActivity", errorMsg, e)
+                Log.w("MainActivity", "Gemini analysis failed, falling back to OCR", e)
                 runOnUiThread {
                     // Update progress dialog for fallback
                     showProgressDialog("📄 Analyzing text with OCR...\nThis may take a moment.")
@@ -372,19 +370,13 @@ class MainActivity : AppCompatActivity() {
                     showAppointmentDetails(appointmentDetails, ocrText)
                 }
             } catch (e: Exception) {
-                val isOverloaded = e.message?.contains("overloaded") == true || e.message?.contains("503") == true
-                val errorMsg = if (isOverloaded) "AI service busy, using local extraction" else "AI extraction failed, using local extraction: ${e.message}"
-                Log.w("AI", errorMsg)
+                Log.w("AI", "AI extraction failed, using local extraction: ${e.message}")
                 runOnUiThread {
-                    // Update dialog to show local processing
-                    showProgressDialog("🔍 Using local text analysis...\nExtracting appointment details.")
-                    // Give a brief delay for user to see the message
-                    binding.btnProcess?.postDelayed({
-                        hideProgressDialog()
-                        val appointmentDetails = extractAppointmentDetails(ocrText)
-                        binding.btnProcess?.isEnabled = true
-                        showAppointmentDetails(appointmentDetails, ocrText)
-                    }, 500)
+                    // Fallback to local extraction
+                    val appointmentDetails = extractAppointmentDetails(ocrText)
+                    hideProgressDialog()
+                    binding.btnProcess?.isEnabled = true
+                    showAppointmentDetails(appointmentDetails, ocrText)
                 }
             }
         }
@@ -485,79 +477,25 @@ class MainActivity : AppCompatActivity() {
         return AppointmentDetails(dates, times, locations, originalText)
     }
 
-    // Enhanced local extraction fallback
+    // Simple local extraction fallback
     private fun extractAppointmentDetails(text: String): AppointmentDetails {
         val dates = mutableListOf<String>()
         val times = mutableListOf<String>()
         val locations = mutableListOf<String>()
 
-        Log.d("LocalExtract", "Extracting from text: ${text.take(200)}...")
-
-        // Enhanced date patterns
-        val datePatterns = listOf(
-            Pattern.compile("\\b\\d{1,2}[/\\-.]\\d{1,2}[/\\-.]\\d{2,4}\\b"), // 12/25/2024, 12-25-24
-            Pattern.compile("\\b\\d{1,2}(st|nd|rd|th)?\\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\w*\\s+\\d{2,4}\\b", Pattern.CASE_INSENSITIVE), // 25th March 2024
-            Pattern.compile("\\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\w*\\s+\\d{1,2}(st|nd|rd|th)?\\s*,?\\s*\\d{2,4}\\b", Pattern.CASE_INSENSITIVE), // March 25, 2024
-            Pattern.compile("\\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\\s+\\d{1,2}(st|nd|rd|th)?\\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\w*", Pattern.CASE_INSENSITIVE) // Monday 25th March
-        )
+        // Basic date patterns
+        val datePattern = Pattern.compile("\\b\\d{1,2}[/\\-.]\\d{1,2}[/\\-.]\\d{2,4}\\b")
+        val timePattern = Pattern.compile("\\b\\d{1,2}:\\d{2}\\s*(AM|PM|am|pm)?\\b")
         
-        datePatterns.forEach { pattern ->
-            val matcher = pattern.matcher(text)
-            while (matcher.find()) {
-                dates.add(matcher.group())
-            }
+        val dateMatcher = datePattern.matcher(text)
+        while (dateMatcher.find()) {
+            dates.add(dateMatcher.group())
         }
 
-        // Enhanced time patterns
-        val timePatterns = listOf(
-            Pattern.compile("\\b\\d{1,2}:\\d{2}\\s*(AM|PM|am|pm)\\b"), // 2:30 PM
-            Pattern.compile("\\b\\d{1,2}:\\d{2}\\b"), // 14:30
-            Pattern.compile("\\b\\d{1,2}\\s*(AM|PM|am|pm)\\b") // 2 PM
-        )
-        
-        timePatterns.forEach { pattern ->
-            val matcher = pattern.matcher(text)
-            while (matcher.find()) {
-                times.add(matcher.group())
-            }
+        val timeMatcher = timePattern.matcher(text)
+        while (timeMatcher.find()) {
+            times.add(timeMatcher.group())
         }
-
-        // Enhanced location extraction - look for address patterns
-        val locationPatterns = listOf(
-            // Look for postcode patterns (UK, US, etc.)
-            Pattern.compile("([A-Z][A-Za-z\\s,.-]+?)\\s+([A-Z]{1,2}\\d{1,2}[A-Z]?\\s*\\d[A-Z]{2})\\b"), // UK postcodes
-            Pattern.compile("([A-Za-z\\s,.-]+?)\\s+(\\d{5}(-\\d{4})?)\\b"), // US ZIP codes
-            // Look for hospital/clinic patterns
-            Pattern.compile("(\\b(Hospital|Clinic|Medical Centre?|Medical Center|Surgery|Practice|Health Centre?)\\b[^\\n]*)", Pattern.CASE_INSENSITIVE),
-            // Look for street address patterns
-            Pattern.compile("(\\d+\\s+[A-Za-z\\s]+(Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Close|Cl|Way)\\b[^\\n]*)", Pattern.CASE_INSENSITIVE)
-        )
-        
-        locationPatterns.forEach { pattern ->
-            val matcher = pattern.matcher(text)
-            while (matcher.find()) {
-                val location = matcher.group(1)?.trim() ?: matcher.group().trim()
-                if (location.length > 5) { // Avoid very short matches
-                    locations.add(location)
-                }
-            }
-        }
-
-        // If no structured location found, look for common location keywords
-        if (locations.isEmpty()) {
-            val keywordPattern = Pattern.compile("(?i)(?:at|visit|location:|address:)\\s*([^\\n]{10,100})")
-            val keywordMatcher = keywordPattern.matcher(text)
-            while (keywordMatcher.find()) {
-                val location = keywordMatcher.group(1)?.trim()
-                if (!location.isNullOrBlank() && location.length > 10) {
-                    locations.add(location)
-                }
-            }
-        }
-
-        Log.d("LocalExtract", "Found dates: $dates")
-        Log.d("LocalExtract", "Found times: $times")
-        Log.d("LocalExtract", "Found locations: $locations")
 
         return AppointmentDetails(dates, times, locations, text)
     }
@@ -613,7 +551,7 @@ class MainActivity : AppCompatActivity() {
             .setMessage(message)
             .setPositiveButton("💾 Save to ICS File") { dialog, _ ->
                 dialog.dismiss()
-                saveAppointmentAsIcs(details, originalText)
+                saveAppointmentAsIcs(details)
             }
             .setNeutralButton("✨ New Selection") { dialog, _ ->
                 dialog.dismiss()
@@ -635,50 +573,25 @@ class MainActivity : AppCompatActivity() {
     /**
      * Creates ICS content from appointment details and saves it
      */
-    private fun saveAppointmentAsIcs(details: AppointmentDetails, originalText: String) {
+    private fun saveAppointmentAsIcs(details: AppointmentDetails) {
         try {
+            val summary = "Appointment" // Default summary
             val dateStr = if (details.dates.isNotEmpty()) details.dates.first() else ""
             val timeStr = if (details.times.isNotEmpty()) details.times.first() else ""
-            val locationStr = if (details.locations.isNotEmpty()) details.locations.first() else ""
-            
-            // Create meaningful summary from extracted data
-            val summary = when {
-                dateStr.isNotBlank() && timeStr.isNotBlank() -> "Appointment - $dateStr at $timeStr"
-                dateStr.isNotBlank() -> "Appointment - $dateStr"
-                timeStr.isNotBlank() -> "Appointment - $timeStr"
-                else -> "Appointment"
-            }
+            val location = if (details.locations.isNotEmpty()) details.locations.first() else ""
             
             // Parse date and time or use defaults
             val now = ZonedDateTime.now()
             val appointmentDateTime = parseDateTime(dateStr, timeStr) ?: now.plusDays(1).withHour(9).withMinute(0)
             val endDateTime = appointmentDateTime.plusHours(1)
             
-            // Create comprehensive description
-            val description = buildString {
-                appendLine("Created from scanned appointment details")
-                appendLine()
-                if (dateStr.isNotBlank()) {
-                    appendLine("📅 Date: $dateStr")
-                }
-                if (timeStr.isNotBlank()) {
-                    appendLine("⏰ Time: $timeStr")
-                }
-                if (locationStr.isNotBlank()) {
-                    appendLine("📍 Location: $locationStr")
-                }
-                appendLine()
-                appendLine("📝 Original Text:")
-                appendLine(originalText.trim())
-            }
-            
-            // Create ICS content with all details
+            // Create ICS content
             val ics = IcsWriter.buildEvent(
                 summary = summary,
                 start = appointmentDateTime,
                 end = endDateTime,
-                location = if (locationStr.isNotBlank() && locationStr != "Not found") locationStr else null,
-                description = description
+                location = if (location.isNotBlank()) location else null,
+                description = "Created from scanned appointment details\n\nExtracted information:\nDate: $dateStr\nTime: $timeStr\nLocation: $location"
             )
             
             // Store ICS content for saving
@@ -688,15 +601,7 @@ class MainActivity : AppCompatActivity() {
             val fileName = "appointment_${System.currentTimeMillis()}.ics"
             createDocumentLauncher.launch(fileName)
             
-            // Log details for debugging
-            Log.d("ICS", "Creating ICS with:")
-            Log.d("ICS", "Summary: $summary")
-            Log.d("ICS", "Location: $locationStr")
-            Log.d("ICS", "Description length: ${description.length}")
-            Log.d("ICS", "DateTime: $appointmentDateTime")
-            
         } catch (e: Exception) {
-            Log.e("ICS", "Error creating ICS file", e)
             Toast.makeText(this, "Error creating calendar file: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
@@ -709,48 +614,9 @@ class MainActivity : AppCompatActivity() {
             contentResolver.openOutputStream(uri)?.use { os ->
                 os.write(content.toByteArray(Charsets.UTF_8))
             }
-            
-            // Show dialog with option to open the file
-            AlertDialog.Builder(this)
-                .setTitle("📅 Calendar Event Saved!")
-                .setMessage("The appointment has been saved as an ICS file. Would you like to open it in your calendar app?")
-                .setPositiveButton("📅 Open Calendar") { dialog, _ ->
-                    dialog.dismiss()
-                    openIcsFile(uri)
-                }
-                .setNegativeButton("Cancel") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .setCancelable(true)
-                .show()
-                
+            Toast.makeText(this, "📅 Calendar event saved successfully!", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             Toast.makeText(this, "Failed to save calendar file: ${e.message}", Toast.LENGTH_LONG).show()
-        }
-    }
-    
-    /**
-     * Opens the ICS file with the default calendar application
-     */
-    private fun openIcsFile(uri: Uri) {
-        try {
-            val intent = android.content.Intent().apply {
-                action = android.content.Intent.ACTION_VIEW
-                setDataAndType(uri, "text/calendar")
-                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            
-            // Check if there's an app that can handle calendar files
-            if (intent.resolveActivity(packageManager) != null) {
-                startActivity(intent)
-            } else {
-                // Fallback: try to open with any app that can handle the file
-                val chooserIntent = android.content.Intent.createChooser(intent, "Open calendar file with:")
-                startActivity(chooserIntent)
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Failed to open ICS file", e)
-            Toast.makeText(this, "Could not open calendar file. Please check your calendar app.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -769,8 +635,8 @@ class MainActivity : AppCompatActivity() {
                 val timePattern = Pattern.compile("(\\d{1,2}):(\\d{2})\\s*(AM|PM|am|pm)?")
                 val matcher = timePattern.matcher(timeStr)
                 if (matcher.find()) {
-                    var hour = matcher.group(1)?.toInt() ?: 9
-                    val minute = matcher.group(2)?.toInt() ?: 0
+                    var hour = matcher.group(1).toInt()
+                    val minute = matcher.group(2).toInt()
                     val ampm = matcher.group(3)?.uppercase()
                     
                     if (ampm == "PM" && hour != 12) hour += 12

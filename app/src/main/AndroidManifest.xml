@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
         android:label="MakeAppointment"
-        android:icon="@android:drawable/ic_menu_camera"
-        android:roundIcon="@android:drawable/ic_menu_camera"
+        android:icon="@android:drawable/ic_menu_gallery"
+        android:roundIcon="@android:drawable/ic_menu_gallery"
         android:supportsRtl="true"
         android:theme="@style/Theme.MakeAppointment">
 

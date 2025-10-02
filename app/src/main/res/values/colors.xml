@@ -1,7 +1,21 @@
 <resources>
+    <!-- Original Theme Colors -->
     <color name="purple_500">#6750A4</color>
     <color name="purple_700">#4F378B</color>
     <color name="teal_200">#03DAC5</color>
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
+    
+    <!-- meetApp Brand Colors -->
+    <color name="primary_color">#FF2196F3</color>
+    <color name="background_color">#FFF8F9FA</color>
+    <color name="text_primary">#FF212529</color>
+    <color name="text_secondary">#FF6C757D</color>
+    
+    <!-- Letter Card Colors -->
+    <color name="letter_bg_1">#FFE3F2FD</color>  <!-- Light Blue -->
+    <color name="letter_bg_2">#FFE8F5E8</color>  <!-- Light Green -->
+    <color name="letter_bg_3">#FFFCE4EC</color>  <!-- Light Pink -->
+    <color name="letter_bg_4">#FFFFF3E0</color>  <!-- Light Orange -->
+    <color name="letter_text">#FF424242</color>  <!-- Dark Gray -->
 </resources>
