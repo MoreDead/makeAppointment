@@ -3,7 +3,6 @@ package com.example.docscanics
 import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
@@ -56,7 +55,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("MainActivity", "onCreate called - app version with title dialog")
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -124,7 +122,6 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show()
             }
         } catch (e: IOException) {
-            Log.e("MainActivity", "Error loading image", e)
             Toast.makeText(this, "Error loading image: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
@@ -163,19 +160,10 @@ class MainActivity : AppCompatActivity() {
 
                     // Use OCR text as description
                     val ocrResult = runBlocking { OcrProcessor.recognize(crop) }
-                    
-                    // Debug logging
-                    Log.d("MainActivity", "Extracted dates: ${appointmentDetails.dates}")
-                    Log.d("MainActivity", "Extracted times: ${appointmentDetails.times}")
-                    Log.d("MainActivity", "Extracted locations: ${appointmentDetails.locations}")
-                    Log.d("MainActivity", "OCR text length: ${ocrResult.text.length}")
-                    
                     showAppointmentDetails(appointmentDetails, ocrResult.text)
                 }
             } catch (e: Exception) {
                 val isOverloaded = e.message?.contains("overloaded") == true || e.message?.contains("503") == true
-                val errorMsg = if (isOverloaded) "Gemini AI is busy, using OCR + local analysis" else "Gemini analysis failed, using OCR + local analysis"
-                Log.w("MainActivity", errorMsg, e)
                 runOnUiThread {
                     // Update progress dialog for fallback
                     showProgressDialog("📄 Analyzing text with OCR...\nThis may take a moment.")
@@ -214,7 +202,6 @@ class MainActivity : AppCompatActivity() {
                     hideProgressDialog()
                     binding.btnProcess?.isEnabled = true
                     binding.btnProcess?.visibility = View.GONE
-                    Log.e("MainActivity", "OCR failed", e)
                     Toast.makeText(this@MainActivity, "OCR failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
@@ -340,8 +327,6 @@ class MainActivity : AppCompatActivity() {
         val times = mutableListOf<String>()
         val locations = mutableListOf<String>()
 
-        Log.d("Gemini", "Gemini Image Response: $response")
-
         response.lines().forEach { line ->
             val trimmedLine = line.trim()
             when {
@@ -367,8 +352,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        Log.d("Gemini", "Parsed from image - Dates: $dates, Times: $times, Locations: $locations")
-
         return AppointmentDetails(dates, times, locations, "Extracted from image")
     }
 
@@ -387,8 +370,6 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 val isOverloaded = e.message?.contains("overloaded") == true || e.message?.contains("503") == true
-                val errorMsg = if (isOverloaded) "AI service busy, using local extraction" else "AI extraction failed, using local extraction: ${e.message}"
-                Log.w("AI", errorMsg)
                 runOnUiThread {
                     // Update dialog to show local processing
                     showProgressDialog("🔍 Using local text analysis...\nExtracting appointment details.")
@@ -409,7 +390,6 @@ class MainActivity : AppCompatActivity() {
         val apiKey = "AIzaSyCOpiy_zYAXNf9u4FPQ8Mt-NkY8BK0jIUU" // Your Gemini API key
 
         if (apiKey == "YOUR_GEMINI_API_KEY_HERE") {
-            Log.w("AI", "No API key configured, using local extraction")
             return extractAppointmentDetails(ocrText)
         }
 
@@ -467,8 +447,6 @@ class MainActivity : AppCompatActivity() {
         val times = mutableListOf<String>()
         val locations = mutableListOf<String>()
 
-        Log.d("AI", "AI Response: $response")
-
         response.lines().forEach { line ->
             val trimmedLine = line.trim()
             when {
@@ -494,8 +472,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        Log.d("AI", "Parsed - Dates: $dates, Times: $times, Locations: $locations")
-
         return AppointmentDetails(dates, times, locations, originalText)
     }
 
@@ -504,8 +480,6 @@ class MainActivity : AppCompatActivity() {
         val dates = mutableListOf<String>()
         val times = mutableListOf<String>()
         val locations = mutableListOf<String>()
-
-        Log.d("LocalExtract", "Extracting from text: ${text.take(200)}...")
 
         // Enhanced date patterns
         val datePatterns = listOf(
@@ -569,10 +543,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        Log.d("LocalExtract", "Found dates: $dates")
-        Log.d("LocalExtract", "Found times: $times")
-        Log.d("LocalExtract", "Found locations: $locations")
-
         return AppointmentDetails(dates, times, locations, text)
     }
 
@@ -626,8 +596,6 @@ class MainActivity : AppCompatActivity() {
             .setTitle("📅 Appointment Details")
             .setMessage(message)
             .setPositiveButton("Save to Calendar") { dialog, _ ->
-                Log.d("MainActivity", "Save to Calendar button clicked")
-                Toast.makeText(this@MainActivity, "Save to Calendar clicked - opening title dialog", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
                 showTitleSelectionDialog(details, originalText)
             }
@@ -652,34 +620,8 @@ class MainActivity : AppCompatActivity() {
      * Shows the title selection dialog for customizing appointment title
      */
     private fun showTitleSelectionDialog(details: AppointmentDetails, originalText: String) {
-        Log.d("MainActivity", "showTitleSelectionDialog called")
-        try {
-            // Test with simple dialog first
-            AlertDialog.Builder(this)
-                .setTitle("Title Selection Test")
-                .setMessage("This is a test of the title selection dialog. If you see this, the method is being called.")
-                .setPositiveButton("Continue with Custom Dialog") { dialog, _ ->
-                    dialog.dismiss()
-                    showFullTitleSelectionDialog(details, originalText)
-                }
-                .setNegativeButton("Skip to Save") { dialog, _ ->
-                    dialog.dismiss()
-                    saveAppointmentAsIcs(details, originalText)
-                }
-                .show()
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error in showTitleSelectionDialog", e)
-            Toast.makeText(this, "Error showing title selection: ${e.message}", Toast.LENGTH_LONG).show()
-            // Fallback to direct save
-            saveAppointmentAsIcs(details, originalText)
-        }
-    }
-    
-    private fun showFullTitleSelectionDialog(details: AppointmentDetails, originalText: String) {
-        Log.d("MainActivity", "showFullTitleSelectionDialog called")
         try {
             val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_title_selection, null)
-            Log.d("MainActivity", "Dialog layout inflated successfully")
         
         val spinnerWords = dialogView.findViewById<Spinner>(R.id.spinnerTitleWords)
         val editNewWord = dialogView.findViewById<TextInputEditText>(R.id.editNewWord)
@@ -760,12 +702,8 @@ class MainActivity : AppCompatActivity() {
             saveAppointmentAsIcs(details, originalText, customTitle)
         }
         
-            Log.d("MainActivity", "About to show title selection dialog")
             dialog.show()
-            Log.d("MainActivity", "Title selection dialog shown successfully")
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error in showTitleSelectionDialog", e)
-            Toast.makeText(this, "Error showing title selection: ${e.message}", Toast.LENGTH_LONG).show()
             // Fallback to direct save
             saveAppointmentAsIcs(details, originalText)
         }
@@ -827,15 +765,7 @@ class MainActivity : AppCompatActivity() {
             val fileName = "appointment_${System.currentTimeMillis()}.ics"
             createDocumentLauncher.launch(fileName)
             
-            // Log details for debugging
-            Log.d("ICS", "Creating ICS with:")
-            Log.d("ICS", "Summary: $summary")
-            Log.d("ICS", "Location: $locationStr")
-            Log.d("ICS", "Description length: ${description.length}")
-            Log.d("ICS", "DateTime: $appointmentDateTime")
-            
         } catch (e: Exception) {
-            Log.e("ICS", "Error creating ICS file", e)
             Toast.makeText(this, "Error creating calendar file: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
@@ -888,7 +818,6 @@ class MainActivity : AppCompatActivity() {
                 startActivity(chooserIntent)
             }
         } catch (e: Exception) {
-            Log.e("MainActivity", "Failed to open ICS file", e)
             Toast.makeText(this, "Could not open calendar file. Please check your calendar app.", Toast.LENGTH_LONG).show()
         }
     }
@@ -903,8 +832,6 @@ class MainActivity : AppCompatActivity() {
             
             // Try to parse date first
             if (dateStr.isNotBlank() && dateStr != "Not found") {
-                Log.d("MainActivity", "Parsing date: '$dateStr'")
-                
                 // Try different date patterns
                 val datePatterns = listOf(
                     // DD/MM/YYYY, MM/DD/YYYY patterns
@@ -920,15 +847,12 @@ class MainActivity : AppCompatActivity() {
                     if (matcher.find()) {
                         try {
                             val parts = listOf(matcher.group(1), matcher.group(2), matcher.group(3))
-                            Log.d("MainActivity", "Date parts found: $parts")
                             
                             // Try to parse the actual date components
                             // This is a basic implementation - in production you'd want more sophisticated parsing
                             val part1 = parts[0]?.trim() ?: ""
                             val part2 = parts[1]?.trim() ?: ""
                             val part3 = parts[2]?.trim() ?: ""
-                            
-                            Log.d("MainActivity", "Date parts: '$part1', '$part2', '$part3'")
                             
                             // Month name to number mapping
                             val monthMap = mapOf(
@@ -983,10 +907,9 @@ class MainActivity : AppCompatActivity() {
                             val validDay = day.coerceIn(1, 31)
                             
                             appointmentDateTime = now.withYear(validYear).withMonth(validMonth).withDayOfMonth(validDay).withHour(9).withMinute(0)
-                            Log.d("MainActivity", "Parsed date to: ${validDay}/${validMonth}/${validYear} (${validDay} ${getMonthName(validMonth)} ${validYear})")
                             break
                         } catch (e: Exception) {
-                            Log.w("MainActivity", "Failed to parse date parts: ${e.message}")
+                            // Ignore parsing errors and continue
                         }
                     }
                 }
@@ -994,7 +917,6 @@ class MainActivity : AppCompatActivity() {
             
             // Try to parse time and apply it to the date
             if (timeStr.isNotBlank() && timeStr != "Not found") {
-                Log.d("MainActivity", "Parsing time: '$timeStr'")
                 val timePattern = Pattern.compile("(\\d{1,2}):(\\d{2})\\s*(AM|PM|am|pm)?")
                 val matcher = timePattern.matcher(timeStr)
                 if (matcher.find()) {
@@ -1006,27 +928,15 @@ class MainActivity : AppCompatActivity() {
                     if (ampm == "AM" && hour == 12) hour = 0
                     
                     appointmentDateTime = appointmentDateTime.withHour(hour).withMinute(minute)
-                    Log.d("MainActivity", "Parsed time to: ${appointmentDateTime.hour}:${appointmentDateTime.minute}")
                 }
             }
             
-            Log.d("MainActivity", "Final parsed datetime: $appointmentDateTime")
             appointmentDateTime
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error parsing date/time", e)
             null
         }
     }
 
-    /**
-     * Helper function to get month name for debugging
-     */
-    private fun getMonthName(month: Int): String {
-        val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-        return if (month in 1..12) months[month - 1] else "Unknown"
-    }
-    
     /**
      * Finds the earliest valid time from a list of time strings
      */

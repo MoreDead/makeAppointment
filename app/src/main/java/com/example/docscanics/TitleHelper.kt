@@ -106,18 +106,31 @@ object TitleHelper {
     
     /**
      * Format location according to requirements:
+     * - Extract only the first part of the location (venue/facility name)
      * - If 15 characters or less, use as-is
      * - If longer, create acronym from first letter of each word
      */
     private fun formatLocation(location: String): String {
         val cleanLocation = location.trim()
         
-        if (cleanLocation.length <= 15) {
-            return cleanLocation
+        // Extract the first part of the location (before any separator)
+        // Common separators: comma, newline, semicolon, pipe, dash with spaces
+        val firstPart = cleanLocation.split(Regex("[,\n;|]|\\s+-\\s+"))[0].trim()
+        
+        // If the first part is very short, try to get a bit more context
+        val locationForTitle = if (firstPart.length < 3 && cleanLocation.length > firstPart.length) {
+            // If first part is too short, take up to first meaningful separator
+            cleanLocation.split(Regex("[,\n]"))[0].trim()
+        } else {
+            firstPart
+        }
+        
+        if (locationForTitle.length <= 15) {
+            return locationForTitle
         }
         
         // Create acronym from first letter of each word
-        val words = cleanLocation.split(Regex("\\s+"))
+        val words = locationForTitle.split(Regex("\\s+"))
         val acronym = words
             .filter { it.isNotBlank() }
             .map { word ->
@@ -133,7 +146,7 @@ object TitleHelper {
             "$acronym..."
         } else {
             // Fallback: first 15 characters with ellipsis
-            "${cleanLocation.take(12)}..."
+            "${locationForTitle.take(12)}..."
         }
     }
     
