@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MainActivity", "onCreate called - app version with title dialog")
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -162,6 +163,13 @@ class MainActivity : AppCompatActivity() {
 
                     // Use OCR text as description
                     val ocrResult = runBlocking { OcrProcessor.recognize(crop) }
+                    
+                    // Debug logging
+                    Log.d("MainActivity", "Extracted dates: ${appointmentDetails.dates}")
+                    Log.d("MainActivity", "Extracted times: ${appointmentDetails.times}")
+                    Log.d("MainActivity", "Extracted locations: ${appointmentDetails.locations}")
+                    Log.d("MainActivity", "OCR text length: ${ocrResult.text.length}")
+                    
                     showAppointmentDetails(appointmentDetails, ocrResult.text)
                 }
             } catch (e: Exception) {
@@ -617,17 +625,19 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("📅 Appointment Details")
             .setMessage(message)
-            .setPositiveButton("💾 Save to Calendar") { dialog, _ ->
+            .setPositiveButton("Save to Calendar") { dialog, _ ->
+                Log.d("MainActivity", "Save to Calendar button clicked")
+                Toast.makeText(this@MainActivity, "Save to Calendar clicked - opening title dialog", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
                 showTitleSelectionDialog(details, originalText)
             }
-            .setNeutralButton("✨ New Selection") { dialog, _ ->
+            .setNeutralButton("New Selection") { dialog, _ ->
                 dialog.dismiss()
                 // Keep the same image but allow new selection, show processing button
                 binding.btnProcess?.visibility = View.VISIBLE
                 selectionOverlay.reset()
             }
-            .setNegativeButton("📷 New Image") { dialog, _ ->
+            .setNegativeButton("New Image") { dialog, _ ->
                 dialog.dismiss()
                 // Reset to choose new image
                 selectedBitmap = null
@@ -642,7 +652,34 @@ class MainActivity : AppCompatActivity() {
      * Shows the title selection dialog for customizing appointment title
      */
     private fun showTitleSelectionDialog(details: AppointmentDetails, originalText: String) {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_title_selection, null)
+        Log.d("MainActivity", "showTitleSelectionDialog called")
+        try {
+            // Test with simple dialog first
+            AlertDialog.Builder(this)
+                .setTitle("Title Selection Test")
+                .setMessage("This is a test of the title selection dialog. If you see this, the method is being called.")
+                .setPositiveButton("Continue with Custom Dialog") { dialog, _ ->
+                    dialog.dismiss()
+                    showFullTitleSelectionDialog(details, originalText)
+                }
+                .setNegativeButton("Skip to Save") { dialog, _ ->
+                    dialog.dismiss()
+                    saveAppointmentAsIcs(details, originalText)
+                }
+                .show()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error in showTitleSelectionDialog", e)
+            Toast.makeText(this, "Error showing title selection: ${e.message}", Toast.LENGTH_LONG).show()
+            // Fallback to direct save
+            saveAppointmentAsIcs(details, originalText)
+        }
+    }
+    
+    private fun showFullTitleSelectionDialog(details: AppointmentDetails, originalText: String) {
+        Log.d("MainActivity", "showFullTitleSelectionDialog called")
+        try {
+            val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_title_selection, null)
+            Log.d("MainActivity", "Dialog layout inflated successfully")
         
         val spinnerWords = dialogView.findViewById<Spinner>(R.id.spinnerTitleWords)
         val editNewWord = dialogView.findViewById<TextInputEditText>(R.id.editNewWord)
@@ -723,7 +760,15 @@ class MainActivity : AppCompatActivity() {
             saveAppointmentAsIcs(details, originalText, customTitle)
         }
         
-        dialog.show()
+            Log.d("MainActivity", "About to show title selection dialog")
+            dialog.show()
+            Log.d("MainActivity", "Title selection dialog shown successfully")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error in showTitleSelectionDialog", e)
+            Toast.makeText(this, "Error showing title selection: ${e.message}", Toast.LENGTH_LONG).show()
+            // Fallback to direct save
+            saveAppointmentAsIcs(details, originalText)
+        }
     }
     
     /**
@@ -854,12 +899,102 @@ class MainActivity : AppCompatActivity() {
     private fun parseDateTime(dateStr: String, timeStr: String): ZonedDateTime? {
         return try {
             val now = ZonedDateTime.now()
-            // For simplicity, just use current date/time plus parsed info if available
-            // In a real app, you'd want more sophisticated parsing
-            val baseDateTime = now.plusDays(1).withHour(9).withMinute(0)
+            var appointmentDateTime = now.plusDays(1).withHour(9).withMinute(0) // Default fallback
             
-            // Try to parse time
-            if (timeStr.isNotBlank()) {
+            // Try to parse date first
+            if (dateStr.isNotBlank() && dateStr != "Not found") {
+                Log.d("MainActivity", "Parsing date: '$dateStr'")
+                
+                // Try different date patterns
+                val datePatterns = listOf(
+                    // DD/MM/YYYY, MM/DD/YYYY patterns
+                    Pattern.compile("(\\d{1,2})[/\\-](\\d{1,2})[/\\-](\\d{2,4})"),
+                    // DD Month YYYY pattern (e.g., "11 Oct", "11 October 2024")
+                    Pattern.compile("(\\d{1,2})\\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\w*(?:\\s+(\\d{2,4}))?", Pattern.CASE_INSENSITIVE),
+                    // Month DD YYYY pattern (e.g., "Oct 11", "October 11, 2024")
+                    Pattern.compile("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\w*\\s+(\\d{1,2}),?(?:\\s+(\\d{2,4}))?", Pattern.CASE_INSENSITIVE)
+                )
+                
+                for (pattern in datePatterns) {
+                    val matcher = pattern.matcher(dateStr)
+                    if (matcher.find()) {
+                        try {
+                            val parts = listOf(matcher.group(1), matcher.group(2), matcher.group(3))
+                            Log.d("MainActivity", "Date parts found: $parts")
+                            
+                            // Try to parse the actual date components
+                            // This is a basic implementation - in production you'd want more sophisticated parsing
+                            val part1 = parts[0]?.trim() ?: ""
+                            val part2 = parts[1]?.trim() ?: ""
+                            val part3 = parts[2]?.trim() ?: ""
+                            
+                            Log.d("MainActivity", "Date parts: '$part1', '$part2', '$part3'")
+                            
+                            // Month name to number mapping
+                            val monthMap = mapOf(
+                                "jan" to 1, "january" to 1,
+                                "feb" to 2, "february" to 2,
+                                "mar" to 3, "march" to 3,
+                                "apr" to 4, "april" to 4,
+                                "may" to 5,
+                                "jun" to 6, "june" to 6,
+                                "jul" to 7, "july" to 7,
+                                "aug" to 8, "august" to 8,
+                                "sep" to 9, "september" to 9,
+                                "oct" to 10, "october" to 10,
+                                "nov" to 11, "november" to 11,
+                                "dec" to 12, "december" to 12
+                            )
+                            
+                            val (day, month, year) = when {
+                                // Check if part2 is a month name (DD Month YYYY pattern)
+                                monthMap.containsKey(part2.lowercase()) -> {
+                                    val dayNum = part1.toIntOrNull() ?: 1
+                                    val monthNum = monthMap[part2.lowercase()] ?: 1
+                                    val yearNum = if (part3.isNotBlank()) part3.toIntOrNull() ?: now.year else now.year
+                                    Triple(dayNum, monthNum, yearNum)
+                                }
+                                // Check if part1 is a month name (Month DD YYYY pattern)
+                                monthMap.containsKey(part1.lowercase()) -> {
+                                    val monthNum = monthMap[part1.lowercase()] ?: 1
+                                    val dayNum = part2.toIntOrNull() ?: 1
+                                    val yearNum = if (part3.isNotBlank()) part3.toIntOrNull() ?: now.year else now.year
+                                    Triple(dayNum, monthNum, yearNum)
+                                }
+                                // Numeric patterns (DD/MM/YYYY or MM/DD/YYYY)
+                                else -> {
+                                    val num1 = part1.toIntOrNull() ?: 0
+                                    val num2 = part2.toIntOrNull() ?: 0
+                                    val num3 = part3.toIntOrNull() ?: now.year
+                                    
+                                    when {
+                                        num3 > 31 -> { // num3 is year
+                                            if (num1 > 12) Triple(num1, num2, num3) // DD/MM/YYYY
+                                            else Triple(num2, num1, num3) // MM/DD/YYYY
+                                        }
+                                        else -> Triple(num1, num2, now.year) // Use current year if year not provided
+                                    }
+                                }
+                            }
+                            
+                            // Ensure valid ranges
+                            val validYear = if (year < 100) year + 2000 else year // Handle 2-digit years
+                            val validMonth = month.coerceIn(1, 12)
+                            val validDay = day.coerceIn(1, 31)
+                            
+                            appointmentDateTime = now.withYear(validYear).withMonth(validMonth).withDayOfMonth(validDay).withHour(9).withMinute(0)
+                            Log.d("MainActivity", "Parsed date to: ${validDay}/${validMonth}/${validYear} (${validDay} ${getMonthName(validMonth)} ${validYear})")
+                            break
+                        } catch (e: Exception) {
+                            Log.w("MainActivity", "Failed to parse date parts: ${e.message}")
+                        }
+                    }
+                }
+            }
+            
+            // Try to parse time and apply it to the date
+            if (timeStr.isNotBlank() && timeStr != "Not found") {
+                Log.d("MainActivity", "Parsing time: '$timeStr'")
                 val timePattern = Pattern.compile("(\\d{1,2}):(\\d{2})\\s*(AM|PM|am|pm)?")
                 val matcher = timePattern.matcher(timeStr)
                 if (matcher.find()) {
@@ -870,16 +1005,28 @@ class MainActivity : AppCompatActivity() {
                     if (ampm == "PM" && hour != 12) hour += 12
                     if (ampm == "AM" && hour == 12) hour = 0
                     
-                    return baseDateTime.withHour(hour).withMinute(minute)
+                    appointmentDateTime = appointmentDateTime.withHour(hour).withMinute(minute)
+                    Log.d("MainActivity", "Parsed time to: ${appointmentDateTime.hour}:${appointmentDateTime.minute}")
                 }
             }
             
-            baseDateTime
+            Log.d("MainActivity", "Final parsed datetime: $appointmentDateTime")
+            appointmentDateTime
         } catch (e: Exception) {
+            Log.e("MainActivity", "Error parsing date/time", e)
             null
         }
     }
 
+    /**
+     * Helper function to get month name for debugging
+     */
+    private fun getMonthName(month: Int): String {
+        val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+        return if (month in 1..12) months[month - 1] else "Unknown"
+    }
+    
     /**
      * Finds the earliest valid time from a list of time strings
      */
