@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📝 Customize Appointment Title"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary_color"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Title Word Selection -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Choose appointment type:"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="8dp" />
+
+    <Spinner
+        android:id="@+id/spinnerTitleWords"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/spinner_background" />
+
+    <!-- Add New Word Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="20dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Add new word"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editNewWord"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:imeOptions="actionDone"
+                android:inputType="textCapWords" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddWord"
+            android:layout_width="wrap_content"
+            android:layout_height="56dp"
+            android:text="Add"
+            android:layout_marginStart="8dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+    </LinearLayout>
+
+    <!-- Title Preview -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Title preview:"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="8dp" />
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        android:backgroundTint="@color/background_light">
+
+        <TextView
+            android:id="@+id/textTitlePreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Medical - General Hospital, Lo... - 2:30 PM"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:padding="16dp"
+            android:textStyle="bold" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Dialog Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_marginEnd="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💾 Save to Calendar"
+            style="@style/Widget.MaterialComponents.Button" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -4,11 +4,17 @@ import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
 import com.example.docscanics.databinding.ActivityMainBinding
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
@@ -611,9 +617,9 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("📅 Appointment Details")
             .setMessage(message)
-            .setPositiveButton("💾 Save to ICS File") { dialog, _ ->
+            .setPositiveButton("💾 Save to Calendar") { dialog, _ ->
                 dialog.dismiss()
-                saveAppointmentAsIcs(details, originalText)
+                showTitleSelectionDialog(details, originalText)
             }
             .setNeutralButton("✨ New Selection") { dialog, _ ->
                 dialog.dismiss()
@@ -633,16 +639,104 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * Shows the title selection dialog for customizing appointment title
+     */
+    private fun showTitleSelectionDialog(details: AppointmentDetails, originalText: String) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_title_selection, null)
+        
+        val spinnerWords = dialogView.findViewById<Spinner>(R.id.spinnerTitleWords)
+        val editNewWord = dialogView.findViewById<TextInputEditText>(R.id.editNewWord)
+        val btnAddWord = dialogView.findViewById<MaterialButton>(R.id.btnAddWord)
+        val textPreview = dialogView.findViewById<TextView>(R.id.textTitlePreview)
+        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnCancel)
+        val btnSave = dialogView.findViewById<MaterialButton>(R.id.btnSave)
+        
+        // Get appointment data
+        val locationText = if (details.locations.isNotEmpty()) details.locations.first() else "General Hospital, London"
+        val timeText = if (details.times.isNotEmpty()) details.times.first() else "2:30 PM"
+        
+        // Setup spinner with title words
+        val titleWords = TitleHelper.getAllTitleWords(this).toMutableList()
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, titleWords)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerWords.adapter = adapter
+        
+        // Function to update preview
+        fun updatePreview() {
+            val selectedWord = spinnerWords.selectedItem?.toString() ?: ""
+            val previewTitle = TitleHelper.formatAppointmentTitle(selectedWord, locationText, timeText)
+            textPreview.text = previewTitle
+        }
+        
+        // Initial preview update
+        updatePreview()
+        
+        // Update preview when spinner selection changes
+        spinnerWords.setOnItemSelectedListener(object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                updatePreview()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        })
+        
+        // Add word functionality
+        btnAddWord.setOnClickListener {
+            val newWord = editNewWord.text?.toString() ?: ""
+            if (newWord.isBlank()) {
+                Toast.makeText(this, "Please enter a word to add", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            if (TitleHelper.addCustomWord(this, newWord)) {
+                // Refresh spinner with new word
+                titleWords.clear()
+                titleWords.addAll(TitleHelper.getAllTitleWords(this))
+                adapter.notifyDataSetChanged()
+                
+                // Select the new word
+                val newWordIndex = titleWords.indexOfFirst { it.equals(newWord.trim().replaceFirstChar { it.uppercase() }, ignoreCase = true) }
+                if (newWordIndex >= 0) {
+                    spinnerWords.setSelection(newWordIndex)
+                }
+                
+                editNewWord.text?.clear()
+                Toast.makeText(this, "Word added successfully!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Word already exists or is invalid", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+        
+        // Button handlers
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        btnSave.setOnClickListener {
+            val selectedWord = spinnerWords.selectedItem?.toString() ?: ""
+            val customTitle = TitleHelper.formatAppointmentTitle(selectedWord, locationText, timeText)
+            dialog.dismiss()
+            saveAppointmentAsIcs(details, originalText, customTitle)
+        }
+        
+        dialog.show()
+    }
+    
+    /**
      * Creates ICS content from appointment details and saves it
      */
-    private fun saveAppointmentAsIcs(details: AppointmentDetails, originalText: String) {
+    private fun saveAppointmentAsIcs(details: AppointmentDetails, originalText: String, customTitle: String? = null) {
         try {
             val dateStr = if (details.dates.isNotEmpty()) details.dates.first() else ""
             val timeStr = if (details.times.isNotEmpty()) details.times.first() else ""
             val locationStr = if (details.locations.isNotEmpty()) details.locations.first() else ""
             
-            // Create meaningful summary from extracted data
-            val summary = when {
+            // Use custom title if provided, otherwise create meaningful summary from extracted data
+            val summary = customTitle ?: when {
                 dateStr.isNotBlank() && timeStr.isNotBlank() -> "Appointment - $dateStr at $timeStr"
                 dateStr.isNotBlank() -> "Appointment - $dateStr"
                 timeStr.isNotBlank() -> "Appointment - $timeStr"

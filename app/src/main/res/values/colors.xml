@@ -18,4 +18,7 @@
     <color name="letter_bg_3">#FFFCE4EC</color>  <!-- Light Pink -->
     <color name="letter_bg_4">#FFFFF3E0</color>  <!-- Light Orange -->
     <color name="letter_text">#FF424242</color>  <!-- Dark Gray -->
+    
+    <!-- Dialog Colors -->
+    <color name="background_light">#FFF0F2F5</color>  <!-- Very Light Gray -->
 </resources>
